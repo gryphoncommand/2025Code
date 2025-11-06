@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import java.util.function.IntSupplier;
 
+import com.ctre.phoenix6.Orchestra;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionDutyCycle;
 import com.ctre.phoenix6.controls.VelocityDutyCycle;
@@ -18,11 +19,13 @@ public class CoralEffector extends SubsystemBase {
     TalonFX effectorWheel = new TalonFX(12);
     TalonFXConfiguration effectorConfig = new TalonFXConfiguration();
     DigitalInput coralSwitch = new DigitalInput(0);
+    private final Orchestra m_orchestra = new Orchestra();
 
     double targetReference;
     ControlType currentControlType;
 
     public CoralEffector() {
+        effectorConfig.Audio.withAllowMusicDurDisable(true);
         effectorConfig.MotorOutput.withNeutralMode(NeutralModeValue.Brake);
         effectorConfig.ClosedLoopRamps.withDutyCycleClosedLoopRampPeriod(0).withTorqueClosedLoopRampPeriod(0).withVoltageClosedLoopRampPeriod(0);
         effectorConfig.OpenLoopRamps.withDutyCycleOpenLoopRampPeriod(0).withTorqueOpenLoopRampPeriod(0).withVoltageOpenLoopRampPeriod(0);
@@ -30,6 +33,7 @@ public class CoralEffector extends SubsystemBase {
                     
         effectorWheel.getConfigurator().apply(effectorConfig);
 
+        m_orchestra.addInstrument(effectorWheel);
 
         targetReference = 0;
         currentControlType = ControlType.kDutyCycle;
@@ -123,5 +127,21 @@ public class CoralEffector extends SubsystemBase {
 
     public boolean notHasCoral(){
         return coralSwitch.get();
+    }
+
+    public boolean crankThat(){
+        var status = m_orchestra.loadMusic("crankThat.chrp");
+        if (status.isOK()){
+            m_orchestra.play();
+        }
+        return status.isOK();
+    }
+
+    public void stopMusic(){
+        m_orchestra.stop();
+    }
+
+    public boolean isPlaying(){
+        return m_orchestra.isPlaying();
     }
 }

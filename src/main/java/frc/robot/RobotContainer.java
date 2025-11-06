@@ -13,6 +13,7 @@ import static frc.robot.Constants.VisionConstants.kTagLayout;
 
 import java.util.ArrayList;
 
+import com.ctre.phoenix6.Orchestra;
 import com.revrobotics.spark.SparkBase.ControlType;
 
 import edu.wpi.first.math.MathUtil;
@@ -68,6 +69,7 @@ public class RobotContainer {
   private final CoralEffector m_coralHand = new CoralEffector();
   private final CoralFunnel m_funnel = new CoralFunnel();
   private final BlinkinLEDs m_lights = new BlinkinLEDs();
+  
   
 
   // The driver's controller
@@ -176,6 +178,14 @@ public class RobotContainer {
     m_operatorController.a().onTrue(new InstantCommand(()->m_robotDrive.stop(), m_robotDrive));
     m_operatorController.b().onTrue(new InstantCommand(() -> m_elevator.setEncoderPosition(0), m_elevator.returnSubsystem()));
     m_operatorController.y().onTrue(new InstantCommand(() -> m_robotDrive.setX(), m_robotDrive));
+
+    m_operatorController.leftStick().onTrue(new RunCommand(()->{
+      if (!m_coralHand.isPlaying()){
+        m_coralHand.crankThat();
+      } else {
+        m_coralHand.stopMusic();
+      }
+    }, m_coralHand));
   }
 
   private void operatorScoring(){
