@@ -1,7 +1,9 @@
 package frc.robot.subsystems;
 
+import java.util.List;
 import java.util.function.IntSupplier;
 
+import com.ctre.phoenix6.Orchestra;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionDutyCycle;
 import com.ctre.phoenix6.controls.VelocityDutyCycle;
@@ -16,8 +18,10 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 public class CoralEffector extends SubsystemBase {
     
     TalonFX effectorWheel = new TalonFX(12);
+    TalonFX theOtherOne = new TalonFX(25);
     TalonFXConfiguration effectorConfig = new TalonFXConfiguration();
     DigitalInput coralSwitch = new DigitalInput(0);
+    Orchestra orchestra = new Orchestra(List.of(effectorWheel, new TalonFX(25)));
 
     double targetReference;
     ControlType currentControlType;
@@ -27,8 +31,10 @@ public class CoralEffector extends SubsystemBase {
         effectorConfig.ClosedLoopRamps.withDutyCycleClosedLoopRampPeriod(0).withTorqueClosedLoopRampPeriod(0).withVoltageClosedLoopRampPeriod(0);
         effectorConfig.OpenLoopRamps.withDutyCycleOpenLoopRampPeriod(0).withTorqueOpenLoopRampPeriod(0).withVoltageOpenLoopRampPeriod(0);
         effectorConfig.Slot0.withKP(0.5);
+        effectorConfig.Audio.withAllowMusicDurDisable(true);
                     
         effectorWheel.getConfigurator().apply(effectorConfig);
+        theOtherOne.getConfigurator().apply(new TalonFXConfiguration().Audio.withAllowMusicDurDisable(true));
 
 
         targetReference = 0;
@@ -123,5 +129,9 @@ public class CoralEffector extends SubsystemBase {
 
     public boolean notHasCoral(){
         return coralSwitch.get();
+    }
+
+    public Orchestra getOrchestra() {
+        return orchestra;
     }
 }

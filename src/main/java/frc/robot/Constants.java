@@ -241,4 +241,17 @@ public final class Constants {
     public static final double blue = 0.92;
     public static final double green = 0.73;
   }
+
+  /**
+   * Songstants, if you will
+   */
+  public static class SongConstants {
+    public static final String CRANK_THAT = "chrp/crank.chrp";
+    public static final String DANCE_OF_DOG = "chrp/dance_of_dog.chrp";
+    public static final String FAN_CLUB = "chrp/fan club.chrp";
+    public static final String RAISE_UP = "chrp/raise up.chrp";
+    public static final String RAISE_BASS = "chrp/raise up your bass.chrp";
+    public static final String RIP = "chrp/better fleentstones.chrp";
+    public static final String RIP_LEAD = "chrp/backup fleentstones.chrp";
+  }
 }

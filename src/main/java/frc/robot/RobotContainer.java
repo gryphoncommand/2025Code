@@ -11,13 +11,16 @@ import frc.littletonUtils.AllianceFlipUtil;
 import static edu.wpi.first.units.Units.Seconds;
 import static frc.robot.Constants.VisionConstants.kTagLayout;
 
+import java.io.File;
 import java.util.ArrayList;
 
+import com.ctre.phoenix6.Orchestra;
 import com.revrobotics.spark.SparkBase.ControlType;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -25,11 +28,13 @@ import frc.robot.Constants.AlignmentConstants;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.FunnelConstants;
 import frc.robot.Constants.OIConstants;
+import frc.robot.Constants.SongConstants;
 import frc.robot.commands.AlignToReefFieldRelative;
 import frc.robot.commands.MoveCoralToL4Position;
 import frc.robot.commands.MoveToIntakePositions;
 import frc.robot.commands.MoveToScoringPosition;
 import frc.robot.commands.OperatorScoreCoal;
+import frc.robot.commands.PlaySong;
 import frc.robot.commands.RotateFunnel;
 import frc.robot.commands.ScoreCoral;
 import frc.robot.subsystems.Elevator.Elevator;
@@ -49,6 +54,7 @@ import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
+import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.PositionPIDCommand;
@@ -58,6 +64,7 @@ import frc.robot.commands.PositionPIDCommand;
  * "declarative" paradigm, very little robot logic should actually be handled in the {@link Robot}
  * periodic methods (other than the scheduler calls).  Instead, the structure of the robot
  * (including subsystems, commands, and button mappings) should be declared here.
+ * grey
  */
 public class RobotContainer {
   // The robot's subsystems
@@ -68,11 +75,13 @@ public class RobotContainer {
   private final CoralEffector m_coralHand = new CoralEffector();
   private final CoralFunnel m_funnel = new CoralFunnel();
   private final BlinkinLEDs m_lights = new BlinkinLEDs();
+  private final Orchestra m_orchestra = m_coralHand.getOrchestra();
   
 
   // The driver's controller
   CommandXboxController m_driverController = new CommandXboxController(OIConstants.kDriverControllerPort);
   CommandXboxController m_operatorController = new CommandXboxController(1);
+  CommandJoystick m_djController = new CommandJoystick(2);
 
   Trigger handHasCoral = new Trigger(m_coralHand::hasCoral);
   int[] reefTags;
@@ -149,6 +158,16 @@ public class RobotContainer {
 
     SmartDashboard.putNumber("Left Reef Align", AlignmentConstants.leftReefFieldAlignment);
     SmartDashboard.putNumber("Right Reef Align", AlignmentConstants.rightReefFieldAlignment);
+
+    SendableChooser<String> chooser = new SendableChooser<>();
+    File songDir = new File(Filesystem.getDeployDirectory(), "chrp");
+    for (String x : songDir.list()) {
+      chooser.addOption(x, "chrp/" + x);
+    }
+
+    // This doesn't work in the simultor due to differing file structures
+    SmartDashboard.putData("Songs", chooser);
+    SmartDashboard.putData("Play", new InstantCommand(() -> new PlaySong(m_orchestra, chooser::getSelected, m_coralHand).schedule()));
   }
 
   private void configureButtonBindings() {
@@ -176,6 +195,14 @@ public class RobotContainer {
     m_operatorController.a().onTrue(new InstantCommand(()->m_robotDrive.stop(), m_robotDrive));
     m_operatorController.b().onTrue(new InstantCommand(() -> m_elevator.setEncoderPosition(0), m_elevator.returnSubsystem()));
     m_operatorController.y().onTrue(new InstantCommand(() -> m_robotDrive.setX(), m_robotDrive));
+
+    m_djController.button(7).onTrue(new PlaySong(m_orchestra, SongConstants.RIP, m_coralHand));
+    m_djController.button(7).and(m_djController.button(1)).onTrue(new PlaySong(m_orchestra, SongConstants.RIP_LEAD, m_coralHand));
+    m_djController.button(8).onTrue(new PlaySong(m_orchestra, SongConstants.FAN_CLUB, m_coralHand));
+    m_djController.button(9).onTrue(new PlaySong(m_orchestra, SongConstants.RAISE_BASS, m_coralHand));
+    m_djController.button(9).and(m_djController.button(1)).onTrue(new PlaySong(m_orchestra, SongConstants.RAISE_UP, m_coralHand));
+    m_djController.button(10).onTrue(new PlaySong(m_orchestra, SongConstants.CRANK_THAT, m_coralHand));
+    m_djController.button(11).onTrue(new PlaySong(m_orchestra, SongConstants.DANCE_OF_DOG, m_coralHand));
   }
 
   private void operatorScoring(){
@@ -296,7 +323,8 @@ public class RobotContainer {
                   m_funnel,
                   m_robotDrive,
                   reefTags[putCmd.getSide() - 1]
-              )
+              ),
+              putCmd.getLevel() == 4 ? new PlaySong(m_orchestra, SongConstants.CRANK_THAT) : new InstantCommand()
           );
           convertedCommands.add(fullSequence);
         } else if (fullCommand instanceof Parser.GetCoralCommand) {
